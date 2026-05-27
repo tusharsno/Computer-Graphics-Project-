@@ -10,6 +10,7 @@
 #include "src/lighting.h"
 #include "src/texture.h"
 #include "src/ui.h"
+#include "src/audio.h"
 
 static bool  paused     = false;
 static float speedMult  = 1.0f;
@@ -26,6 +27,7 @@ void update(int) {
                 planets[i].moonAngle += planets[i].moonOrbitSpeed * speedMult;
         }
     }
+    smoothUpdateCamera();
     glutPostRedisplay();
     glutTimerFunc(16, update, 0);   // ~60 FPS
 }
@@ -90,24 +92,26 @@ void reshape(int w, int h) {
 void keyboard(unsigned char key, int, int) {
     switch (key) {
         case ' ':  paused = !paused;                                    break;
-        case '+':  speedMult = (speedMult < 10.0f) ? speedMult + 0.5f : speedMult; break;
-        case '-':  speedMult = (speedMult > 0.5f)  ? speedMult - 0.5f : speedMult; break;
+        case '+': case '=': speedMult = (speedMult < 20.0f) ? speedMult + 0.25f : speedMult; break;
+        case '-':             speedMult = (speedMult > 0.1f)  ? speedMult - 0.25f : speedMult; break;
         case 'o': case 'O': showOrbits = !showOrbits;                   break;
         case 'l': case 'L': showLabels = !showLabels;                   break;
-        case 'r': case 'R': resetCamera();                              break;
-        case 'w': case 'W': camera.distance = (camera.distance > 10.0f) ? camera.distance - 1.5f : camera.distance; break;
-        case 's': case 'S': camera.distance = (camera.distance < 120.0f)? camera.distance + 1.5f : camera.distance; break;
+        case 'r': case 'R': resetCamera(); break;
+        case 'w': case 'W': camera.targetDistance = (camera.targetDistance > 10.0f)  ? camera.targetDistance - 1.5f : camera.targetDistance; break;
+        case 's': case 'S': camera.targetDistance = (camera.targetDistance < 120.0f) ? camera.targetDistance + 1.5f : camera.targetDistance; break;
         case 27:   exit(0);                                             break;
     }
     glutPostRedisplay();
 }
 
-// ── mouse click (planet selection) ───────────────────────────────────────────
+// ── mouse click (planet selection + double-click focus) ──────────────────────
+static int  lastClickTime   = 0;
+static int  lastClickPlanet = -1;
+
 void mouseClick(int button, int state, int x, int y) {
     cameraMouseButton(button, state, x, y);
 
     if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
-        // simple pick: find closest planet to click ray (screen-space distance)
         GLdouble model[16], proj[16];
         GLint    vp[4];
         glGetDoublev(GL_MODELVIEW_MATRIX,  model);
@@ -126,6 +130,16 @@ void mouseClick(int button, int state, int x, int y) {
             if (d < bestDist) { bestDist = d; best = i; }
         }
         selectedPlanet = best;
+
+        // double-click detection (within 400ms on same planet)
+        int now = glutGet(GLUT_ELAPSED_TIME);
+        if (best >= 0 && best == lastClickPlanet && (now - lastClickTime) < 400) {
+            float px = planets[best].orbitRadius * cos(planets[best].orbitAngle * 3.14159f / 180.0f);
+            float pz = planets[best].orbitRadius * sin(planets[best].orbitAngle * 3.14159f / 180.0f);
+            focusPlanet(px, pz, planets[best].radius);
+        }
+        lastClickTime   = now;
+        lastClickPlanet = best;
     }
 }
 
@@ -143,6 +157,7 @@ int main(int argc, char** argv) {
     initLighting();
     initRenderer();
     loadAllTextures();
+    initAudio();
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
@@ -152,5 +167,6 @@ int main(int argc, char** argv) {
     glutTimerFunc(16, update, 0);
 
     glutMainLoop();
+    cleanupAudio();
     return 0;
 }

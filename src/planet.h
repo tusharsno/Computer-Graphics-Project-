@@ -17,9 +17,10 @@ struct Planet {
     float moonAngle;
     float moonOrbitRadius;
     float moonOrbitSpeed;
+    float axialTilt;  // degrees
 };
 
-extern Planet planets[8];
+extern Planet planets[9];
 extern int planetCount;
 
 void initPlanets();

@@ -30,9 +30,13 @@ GLuint loadTexture(const std::string& path) {
     return texID;
 }
 
+GLuint sunTextureID  = 0;
+GLuint moonTextureID = 0;
+
 void loadAllTextures() {
     const std::string names[] = {"mercury","venus","earth","mars","jupiter","saturn","uranus","neptune"};
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; i++)
         planets[i].textureID = loadTexture("textures/" + names[i] + ".jpg");
-    }
+    sunTextureID  = loadTexture("textures/sun.jpg");
+    moonTextureID = loadTexture("textures/moon.jpg");
 }
