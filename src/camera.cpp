@@ -57,17 +57,19 @@ void cameraMouseButton(int button, int state, int x, int y) {
     }
     // scroll wheel
     if (button == 3) { camera.targetDistance = (camera.targetDistance > 10.0f)  ? camera.targetDistance - 1.5f : camera.targetDistance; }
-    if (button == 4) { camera.targetDistance = (camera.targetDistance < 120.0f) ? camera.targetDistance + 1.5f : camera.targetDistance; }
+    if (button == 4) { camera.targetDistance = (camera.targetDistance < 180.0f) ? camera.targetDistance + 1.5f : camera.targetDistance; }
 }
 
 void cameraMouseMotion(int x, int y) {
     if (!camera.dragging) return;
     float dx = x - camera.lastMouseX;
     float dy = y - camera.lastMouseY;
-    camera.angleY += dx * 0.4f;
-    camera.angleX += dy * 0.4f;
-    if (camera.angleX >  89.0f) camera.angleX =  89.0f;
-    if (camera.angleX < -89.0f) camera.angleX = -89.0f;
+    camera.angleY        += dx * 0.6f;
+    camera.angleX        += dy * 0.6f;
+    camera.targetAngleY   = camera.angleY;
+    camera.targetAngleX   = camera.angleX;
+    if (camera.angleX >  89.0f) { camera.angleX =  89.0f; camera.targetAngleX =  89.0f; }
+    if (camera.angleX < -89.0f) { camera.angleX = -89.0f; camera.targetAngleX = -89.0f; }
     camera.lastMouseX = x;
     camera.lastMouseY = y;
     glutPostRedisplay();

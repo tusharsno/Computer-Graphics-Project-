@@ -14,6 +14,8 @@ static GLUquadric* quad = nullptr;
 // pre-generated star positions
 static float starX[1500], starY[1500], starZ[1500];
 
+static GLuint bgTextureID = 0;
+
 // shooting star state
 struct ShootingStar {
     float x, y, z;       // current head position
@@ -56,6 +58,8 @@ void initRenderer() {
         starZ[i] = r * sin(phi) * sin(theta);
     }
     for (int i = 0; i < 5; i++) shooters[i].active = false;
+
+    bgTextureID = loadTexture("textures/milkyway.jpg");
 }
 
 void drawShootingStars() {
@@ -109,6 +113,24 @@ void drawShootingStars() {
 }
 
 void drawStars() {
+    // background sphere with milky way texture — drawn at camera position so it never clips
+    if (bgTextureID) {
+        glDisable(GL_LIGHTING);
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, bgTextureID);
+        glColor3f(1.0f, 1.0f, 1.0f);
+        glPushMatrix();
+        // translate to camera's look-at center so sphere always surrounds the view
+        glScalef(-1.0f, 1.0f, 1.0f);
+        gluSphere(quad, 200.0f, 32, 32);
+        glPopMatrix();
+        glDisable(GL_TEXTURE_2D);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_LIGHTING);
+    }
+
+    // point stars on top for extra depth
     glDisable(GL_LIGHTING);
     glPointSize(1.5f);
     glBegin(GL_POINTS);
@@ -248,18 +270,23 @@ void drawPlanet(int idx) {
     glRotatef(p.axialTilt, 0.0f, 0.0f, 1.0f);  // axial tilt
     glRotatef(p.rotationAngle, 0.0f, 1.0f, 0.0f);
 
-    GLfloat mat_amb[]  = {p.r * 0.3f, p.g * 0.3f, p.b * 0.3f, 1.0f};
-    GLfloat mat_diff[] = {p.r,        p.g,        p.b,        1.0f};
-    GLfloat mat_spec[] = {0.3f, 0.3f, 0.3f, 1.0f};
+    GLfloat mat_amb[]  = {0.15f, 0.15f, 0.15f, 1.0f};
+    GLfloat mat_diff[] = {1.0f,  1.0f,  1.0f,  1.0f};
+    GLfloat mat_spec[] = {0.2f,  0.2f,  0.2f,  1.0f};
     glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_amb);
     glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diff);
     glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_spec);
-    glMaterialf (GL_FRONT, GL_SHININESS, 20.0f);
+    glMaterialf (GL_FRONT, GL_SHININESS, 15.0f);
 
     if (p.textureID) {
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, p.textureID);
     } else {
+        // no texture — use planet color
+        GLfloat ca[] = {p.r*0.3f, p.g*0.3f, p.b*0.3f, 1.0f};
+        GLfloat cd[] = {p.r,      p.g,      p.b,      1.0f};
+        glMaterialfv(GL_FRONT, GL_AMBIENT,  ca);
+        glMaterialfv(GL_FRONT, GL_DIFFUSE,  cd);
         glDisable(GL_TEXTURE_2D);
     }
 

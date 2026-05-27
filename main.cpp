@@ -19,6 +19,8 @@ static int   winH       = 700;
 
 // ── physics update ──────────────────────────────────────────────────────────
 void update(int) {
+    currentSpeed = speedMult;
+    isPaused     = paused;
     if (!paused) {
         for (int i = 0; i < planetCount; i++) {
             planets[i].orbitAngle    += planets[i].orbitSpeed    * speedMult;
@@ -84,7 +86,7 @@ void reshape(int w, int h) {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45.0, (double)w / h, 0.1, 300.0);
+    gluPerspective(45.0, (double)w / h, 0.1, 500.0);
     glMatrixMode(GL_MODELVIEW);
 }
 
@@ -97,8 +99,8 @@ void keyboard(unsigned char key, int, int) {
         case 'o': case 'O': showOrbits = !showOrbits;                   break;
         case 'l': case 'L': showLabels = !showLabels;                   break;
         case 'r': case 'R': resetCamera(); break;
-        case 'w': case 'W': camera.targetDistance = (camera.targetDistance > 10.0f)  ? camera.targetDistance - 1.5f : camera.targetDistance; break;
-        case 's': case 'S': camera.targetDistance = (camera.targetDistance < 120.0f) ? camera.targetDistance + 1.5f : camera.targetDistance; break;
+        case 'w': case 'W': camera.targetDistance = (camera.targetDistance > 10.0f)   ? camera.targetDistance - 1.5f : camera.targetDistance; break;
+        case 's': case 'S': camera.targetDistance = (camera.targetDistance < 180.0f)  ? camera.targetDistance + 1.5f : camera.targetDistance; break;
         case 27:   exit(0);                                             break;
     }
     glutPostRedisplay();
@@ -143,6 +145,21 @@ void mouseClick(int button, int state, int x, int y) {
     }
 }
 
+// ── arrow keys (navigate between planets) ───────────────────────────────────
+void specialKeys(int key, int, int) {
+    if (key == GLUT_KEY_RIGHT)
+        selectedPlanet = (selectedPlanet + 1 + planetCount) % planetCount;
+    else if (key == GLUT_KEY_LEFT)
+        selectedPlanet = (selectedPlanet - 1 + planetCount) % planetCount;
+
+    if (selectedPlanet >= 0) {
+        float px = planets[selectedPlanet].orbitRadius * cos(planets[selectedPlanet].orbitAngle * 3.14159f / 180.0f);
+        float pz = planets[selectedPlanet].orbitRadius * sin(planets[selectedPlanet].orbitAngle * 3.14159f / 180.0f);
+        focusPlanet(px, pz, planets[selectedPlanet].radius);
+    }
+    glutPostRedisplay();
+}
+
 // ── main ─────────────────────────────────────────────────────────────────────
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
@@ -162,6 +179,7 @@ int main(int argc, char** argv) {
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
+    glutSpecialFunc(specialKeys);
     glutMouseFunc(mouseClick);
     glutMotionFunc(cameraMouseMotion);
     glutTimerFunc(16, update, 0);

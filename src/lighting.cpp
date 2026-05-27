@@ -7,7 +7,7 @@ void initLighting() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_NORMALIZE);
 
-    GLfloat ambient[]  = {0.08f, 0.08f, 0.08f, 1.0f};
+    GLfloat ambient[]  = {0.18f, 0.18f, 0.18f, 1.0f};
     GLfloat diffuse[]  = {1.0f,  1.0f,  0.95f, 1.0f};
     GLfloat specular[] = {1.0f,  1.0f,  1.0f,  1.0f};
     GLfloat position[] = {0.0f,  0.0f,  0.0f,  1.0f};
