@@ -147,32 +147,39 @@ void drawStars() {
 void drawSun() {
     glDisable(GL_LIGHTING);
 
-    // outer glow layers
-    float glowColors[][4] = {
-        {1.0f, 0.6f, 0.0f, 0.08f},
-        {1.0f, 0.7f, 0.1f, 0.12f},
-        {1.0f, 0.8f, 0.2f, 0.18f},
-    };
-    float glowSizes[] = {2.8f, 2.4f, 2.1f};
+    static float sunRot = 0.0f;
+    sunRot += 0.015f;
 
+    // 1. solid bright core FIRST
+    glColor3f(1.0f, 0.95f, 0.6f);
+    gluSphere(quad, 2.0f, 64, 64);
+
+    // 2. glow layers on top — disable depth write so they don't block each other
+    glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    for (int g = 0; g < 3; g++) {
-        glColor4fv(glowColors[g]);
-        gluSphere(quad, glowSizes[g], 32, 32);
-    }
-    glDisable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-    // Sun core with texture
-    glColor3f(1.0f, 1.0f, 1.0f);
-    if (sunTextureID) {
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, sunTextureID);
-    } else {
-        glColor3f(1.0f, 0.95f, 0.4f);
-    }
-    gluSphere(quad, 1.8f, 48, 48);
-    glDisable(GL_TEXTURE_2D);
+    // animated fiery surface
+    glColor4f(1.0f, 0.35f, 0.0f, 0.45f);
+    glPushMatrix(); glRotatef(sunRot * 40.0f, 0.3f, 1.0f, 0.2f);
+    gluSphere(quad, 2.05f, 48, 48); glPopMatrix();
+
+    glColor4f(1.0f, 0.15f, 0.0f, 0.30f);
+    glPushMatrix(); glRotatef(-sunRot * 30.0f, 0.1f, 1.0f, 0.5f);
+    gluSphere(quad, 2.07f, 48, 48); glPopMatrix();
+
+    glColor4f(1.0f, 0.6f, 0.0f, 0.22f);
+    glPushMatrix(); glRotatef(sunRot * 20.0f, 0.6f, 1.0f, 0.1f);
+    gluSphere(quad, 2.09f, 48, 48); glPopMatrix();
+
+    // outer glow
+    glColor4f(1.0f, 0.65f, 0.15f, 0.18f); gluSphere(quad, 2.3f, 32, 32);
+    glColor4f(1.0f, 0.6f, 0.1f, 0.12f);   gluSphere(quad, 2.5f, 32, 32);
+    glColor4f(1.0f, 0.5f, 0.05f, 0.07f);  gluSphere(quad, 2.8f, 32, 32);
+    glColor4f(1.0f, 0.4f, 0.0f, 0.04f);   gluSphere(quad, 3.2f, 32, 32);
+
+    glDisable(GL_BLEND);
+    glDepthMask(GL_TRUE);
 
     glEnable(GL_LIGHTING);
 }
@@ -260,6 +267,26 @@ void drawMoon(int idx) {
     glPopMatrix();
 }
 
+void drawAtmosphere(float x, float z, float radius, float r, float g, float b) {
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_TEXTURE_2D);
+
+    // 3 layers — each slightly bigger, more transparent
+    float layers[3][2] = {{0.06f, 0.18f}, {0.12f, 0.10f}, {0.20f, 0.05f}};
+    for (int i = 0; i < 3; i++) {
+        glPushMatrix();
+        glTranslatef(x, 0.0f, z);
+        glColor4f(r, g, b, layers[i][1]);
+        gluSphere(quad, radius + layers[i][0], 32, 32);
+        glPopMatrix();
+    }
+
+    glDisable(GL_BLEND);
+    glEnable(GL_LIGHTING);
+}
+
 void drawPlanet(int idx) {
     Planet& p = planets[idx];
     float x = p.orbitRadius * cos(p.orbitAngle * 3.14159f / 180.0f);
@@ -267,8 +294,8 @@ void drawPlanet(int idx) {
 
     glPushMatrix();
     glTranslatef(x, 0.0f, z);
-    glRotatef(p.axialTilt, 0.0f, 0.0f, 1.0f);  // axial tilt
-    glRotatef(p.rotationAngle, 0.0f, 1.0f, 0.0f);
+    glRotatef(p.axialTilt, 0.0f, 0.0f, 1.0f);      // tilt the axis
+    glRotatef(p.rotationAngle, 0.0f, 1.0f, 0.0f);  // spin around tilted axis
 
     GLfloat mat_amb[]  = {0.15f, 0.15f, 0.15f, 1.0f};
     GLfloat mat_diff[] = {1.0f,  1.0f,  1.0f,  1.0f};
@@ -292,6 +319,43 @@ void drawPlanet(int idx) {
 
     gluSphere(quad, p.radius, 48, 48);
     glDisable(GL_TEXTURE_2D);
+
+    // Earth night side city lights (index 2)
+    if (idx == 2 && nightTextureID) {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ONE, GL_ONE);  // additive blend — lights add on top of dark side
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, nightTextureID);
+        GLfloat na[] = {0.0f, 0.0f, 0.0f, 1.0f};
+        GLfloat nd[] = {0.0f, 0.0f, 0.0f, 1.0f};  // diffuse=0 so only dark side shows lights
+        GLfloat ne[] = {0.6f, 0.5f, 0.3f, 1.0f};  // emissive — city lights glow
+        glMaterialfv(GL_FRONT, GL_AMBIENT,  na);
+        glMaterialfv(GL_FRONT, GL_DIFFUSE,  nd);
+        glMaterialfv(GL_FRONT, GL_EMISSION, ne);
+        gluSphere(quad, p.radius + 0.001f, 48, 48);
+        // reset emission
+        GLfloat zero[] = {0.0f, 0.0f, 0.0f, 1.0f};
+        glMaterialfv(GL_FRONT, GL_EMISSION, zero);
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_BLEND);
+    }
+
+    // Earth cloud layer (index 2)
+    if (idx == 2 && cloudTextureID) {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, cloudTextureID);
+        GLfloat ca[] = {0.15f,0.15f,0.15f,1.0f};
+        GLfloat cd[] = {1.0f, 1.0f, 1.0f, 0.45f};
+        glMaterialfv(GL_FRONT, GL_AMBIENT, ca);
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, cd);
+        // rotate clouds slightly differently for realism
+        glRotatef(p.rotationAngle * 0.3f, 0.0f, 1.0f, 0.0f);
+        gluSphere(quad, p.radius + 0.02f, 48, 48);
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_BLEND);
+    }
 
     // Saturn ring
     if (p.hasRing) {
@@ -351,4 +415,17 @@ void renderScene() {
 
     for (int i = 0; i < planetCount; i++)
         drawPlanet(i);
+
+    // atmosphere glow — Earth (blue), Venus (yellow-white), Mars (red-orange)
+    float earthX = planets[2].orbitRadius * cos(planets[2].orbitAngle * 3.14159f / 180.0f);
+    float earthZ = planets[2].orbitRadius * sin(planets[2].orbitAngle * 3.14159f / 180.0f);
+    drawAtmosphere(earthX, earthZ, planets[2].radius, 0.3f, 0.6f, 1.0f);
+
+    float venusX = planets[1].orbitRadius * cos(planets[1].orbitAngle * 3.14159f / 180.0f);
+    float venusZ = planets[1].orbitRadius * sin(planets[1].orbitAngle * 3.14159f / 180.0f);
+    drawAtmosphere(venusX, venusZ, planets[1].radius, 0.9f, 0.8f, 0.5f);
+
+    float marsX = planets[3].orbitRadius * cos(planets[3].orbitAngle * 3.14159f / 180.0f);
+    float marsZ = planets[3].orbitRadius * sin(planets[3].orbitAngle * 3.14159f / 180.0f);
+    drawAtmosphere(marsX, marsZ, planets[3].radius, 0.9f, 0.4f, 0.2f);
 }

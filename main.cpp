@@ -24,7 +24,7 @@ void update(int) {
     if (!paused) {
         for (int i = 0; i < planetCount; i++) {
             planets[i].orbitAngle    += planets[i].orbitSpeed    * speedMult;
-            planets[i].rotationAngle += planets[i].rotationSpeed * speedMult * 10.0f;
+            planets[i].rotationAngle += planets[i].rotationSpeed * speedMult * 3.0f;
             if (planets[i].hasMoon)
                 planets[i].moonAngle += planets[i].moonOrbitSpeed * speedMult;
         }
