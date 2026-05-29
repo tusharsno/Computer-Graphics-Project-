@@ -10,6 +10,7 @@ bool showOrbits    = true;
 int  selectedPlanet = -1;
 float currentSpeed  = 1.0f;
 bool  isPaused      = false;
+bool  telescopeMode = false;
 
 static int winW = 1200, winH = 700;
 
@@ -33,8 +34,8 @@ void drawHUD() {
 
     glColor3f(1, 1, 1);
     drawText(10, winH - 20, "3D Solar System Simulation");
-    drawText(10, winH - 38, "Mouse Drag: Rotate | Scroll/W/S: Zoom | SPACE: Pause | =/- : Speed");
-    drawText(10, winH - 54, "O: Orbits | L: Labels | R: Reset | Double-Click: Focus | ESC: Exit");
+    drawText(10, winH - 38, "Mouse Drag: Rotate | Scroll/W/S: Zoom | SPACE: Pause | =/- : Speed | T: Telescope");
+    drawText(10, winH - 54, "O: Orbits | L: Labels | R: Reset | Double-Click: Focus | F1: Screenshot | ESC: Exit");
 
     // speed indicator
     char speedBuf[32];
@@ -47,6 +48,11 @@ void drawHUD() {
         else if (currentSpeed < 0.5f) glColor3f(0.5f, 0.8f, 1.0f);
         else                          glColor3f(0.4f, 1.0f, 0.4f);
         drawText(10, winH - 72, speedBuf);
+    }
+
+    if (telescopeMode) {
+        glColor3f(0.4f, 0.9f, 1.0f);
+        drawText(10, winH - 90, "[ TELESCOPE MODE ]");
     }
 
     glEnable(GL_DEPTH_TEST);

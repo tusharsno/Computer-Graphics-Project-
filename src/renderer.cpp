@@ -16,6 +16,70 @@ static float starX[1500], starY[1500], starZ[1500];
 
 static GLuint bgTextureID = 0;
 
+// Halley's Comet
+struct Comet {
+    float angle;      // current position on orbit
+    float speed;
+    float a;          // semi-major axis
+    float b;          // semi-minor axis
+    float tailLen;
+};
+static Comet halley = {0.0f, 0.008f, 50.0f, 12.0f, 0.0f};
+
+static void drawComet() {
+    halley.angle += halley.speed;
+    if (halley.angle > 360.0f) halley.angle -= 360.0f;
+
+    float rad = halley.angle * 3.14159f / 180.0f;
+    // elliptical position
+    float cx = halley.a * cos(rad) - (halley.a - halley.b);
+    float cz = halley.b * sin(rad);
+
+    // distance from sun — closer = faster (Kepler)
+    float dist = sqrt(cx*cx + cz*cz);
+    halley.speed = 0.35f / (dist * 0.08f + 0.5f);
+
+    // tail direction — away from sun
+    float tx = cx / (dist + 0.001f);
+    float tz = cz / (dist + 0.001f);
+    float tailLen = 3.0f + 8.0f * (1.0f - dist / halley.a);
+
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+    // tail
+    int tailSteps = 30;
+    glBegin(GL_TRIANGLE_STRIP);
+    for (int i = 0; i <= tailSteps; i++) {
+        float t     = (float)i / tailSteps;
+        float alpha = (1.0f - t) * 0.6f;
+        float width = (1.0f - t) * 0.12f;
+        float px = cx + tx * t * tailLen;
+        float pz = cz + tz * t * tailLen;
+        glColor4f(0.7f, 0.9f, 1.0f, alpha);
+        glVertex3f(px + tz * width, 0.0f, pz - tx * width);
+        glVertex3f(px - tz * width, 0.0f, pz + tx * width);
+    }
+    glEnd();
+
+    // nucleus
+    glDisable(GL_BLEND);
+    glEnable(GL_LIGHTING);
+    glPushMatrix();
+    glTranslatef(cx, 0.0f, cz);
+    GLfloat ma[] = {0.5f,0.6f,0.7f,1.0f};
+    GLfloat md[] = {0.7f,0.85f,1.0f,1.0f};
+    GLfloat ms[] = {0.3f,0.3f,0.3f,1.0f};
+    glMaterialfv(GL_FRONT, GL_AMBIENT,  ma);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE,  md);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, ms);
+    glMaterialf (GL_FRONT, GL_SHININESS, 10.0f);
+    glDisable(GL_TEXTURE_2D);
+    gluSphere(quad, 0.15f, 12, 12);
+    glPopMatrix();
+}
+
 // shooting star state
 struct ShootingStar {
     float x, y, z;       // current head position
@@ -184,13 +248,17 @@ void drawSun() {
     glEnable(GL_LIGHTING);
 }
 
-void drawOrbit(float radius) {
+void drawOrbit(float radius, float inclination) {
     glDisable(GL_LIGHTING);
     glColor4f(0.4f, 0.4f, 0.6f, 0.5f);
+    float incl = inclination * 3.14159f / 180.0f;
     glBegin(GL_LINE_LOOP);
     for (int i = 0; i < 360; i++) {
         float rad = i * 3.14159f / 180.0f;
-        glVertex3f(radius * cos(rad), 0.0f, radius * sin(rad));
+        float ox  = radius * cos(rad);
+        float oy  = radius * sin(rad) * sin(incl);
+        float oz  = radius * sin(rad) * cos(incl);
+        glVertex3f(ox, oy, oz);
     }
     glEnd();
     glEnable(GL_LIGHTING);
@@ -267,17 +335,16 @@ void drawMoon(int idx) {
     glPopMatrix();
 }
 
-void drawAtmosphere(float x, float z, float radius, float r, float g, float b) {
+void drawAtmosphere(float x, float y, float z, float radius, float r, float g, float b) {
     glDisable(GL_LIGHTING);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_TEXTURE_2D);
 
-    // 3 layers — each slightly bigger, more transparent
     float layers[3][2] = {{0.06f, 0.18f}, {0.12f, 0.10f}, {0.20f, 0.05f}};
     for (int i = 0; i < 3; i++) {
         glPushMatrix();
-        glTranslatef(x, 0.0f, z);
+        glTranslatef(x, y, z);
         glColor4f(r, g, b, layers[i][1]);
         gluSphere(quad, radius + layers[i][0], 32, 32);
         glPopMatrix();
@@ -289,11 +356,14 @@ void drawAtmosphere(float x, float z, float radius, float r, float g, float b) {
 
 void drawPlanet(int idx) {
     Planet& p = planets[idx];
-    float x = p.orbitRadius * cos(p.orbitAngle * 3.14159f / 180.0f);
-    float z = p.orbitRadius * sin(p.orbitAngle * 3.14159f / 180.0f);
+    float rad    = p.orbitAngle * 3.14159f / 180.0f;
+    float incl   = p.orbitInclination * 3.14159f / 180.0f;
+    float x = p.orbitRadius * cos(rad);
+    float y = p.orbitRadius * sin(rad) * sin(incl);
+    float z = p.orbitRadius * sin(rad) * cos(incl);
 
     glPushMatrix();
-    glTranslatef(x, 0.0f, z);
+    glTranslatef(x, y, z);
     glRotatef(p.axialTilt, 0.0f, 0.0f, 1.0f);      // tilt the axis
     glRotatef(p.rotationAngle, 0.0f, 1.0f, 0.0f);  // spin around tilted axis
 
@@ -359,13 +429,56 @@ void drawPlanet(int idx) {
 
     // Saturn ring
     if (p.hasRing) {
-        drawSaturnRing(p.radius * 1.3f, p.radius * 2.3f);
+        if (idx == 5) drawSaturnRing(p.radius * 1.3f, p.radius * 2.3f);
+        else if (idx == 6) {
+            // Uranus ring — thin, dark, bluish, tilted with planet (97.8 deg already applied)
+            glDisable(GL_LIGHTING);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            int steps = 120;
+            glBegin(GL_TRIANGLE_STRIP);
+            for (int s = 0; s <= steps; s++) {
+                float angle = s * 2.0f * 3.14159f / steps;
+                float ca = cos(angle), sa = sin(angle);
+                glColor4f(0.4f, 0.6f, 0.8f, 0.35f);
+                glVertex3f((p.radius * 1.6f) * ca, 0.0f, (p.radius * 1.6f) * sa);
+                glColor4f(0.3f, 0.5f, 0.7f, 0.15f);
+                glVertex3f((p.radius * 1.3f) * ca, 0.0f, (p.radius * 1.3f) * sa);
+            }
+            glEnd();
+            glDisable(GL_BLEND);
+            glEnable(GL_LIGHTING);
+        }
     }
 
     glPopMatrix();
 
     // Moon
     if (p.hasMoon) drawMoon(idx);
+
+    // Mars moons: Phobos & Deimos (index 3)
+    if (idx == 3) {
+        static float marsMoonAngles[2] = {0.0f, 180.0f};
+        static const float marsMoonSpeeds[2] = {5.0f, 2.0f};
+        static const float marsMoonRadii[2]  = {0.9f, 1.5f};
+        for (int m = 0; m < 2; m++) {
+            marsMoonAngles[m] += marsMoonSpeeds[m] * 0.016f;
+            float mx = x + marsMoonRadii[m] * cos(marsMoonAngles[m] * 3.14159f / 180.0f);
+            float mz = z + marsMoonRadii[m] * sin(marsMoonAngles[m] * 3.14159f / 180.0f);
+            glPushMatrix();
+            glTranslatef(mx, 0.0f, mz);
+            GLfloat ma[] = {0.35f,0.30f,0.25f,1.0f};
+            GLfloat md[] = {0.55f,0.48f,0.40f,1.0f};
+            GLfloat ms[] = {0.05f,0.05f,0.05f,1.0f};
+            glMaterialfv(GL_FRONT, GL_AMBIENT,  ma);
+            glMaterialfv(GL_FRONT, GL_DIFFUSE,  md);
+            glMaterialfv(GL_FRONT, GL_SPECULAR, ms);
+            glMaterialf (GL_FRONT, GL_SHININESS, 3.0f);
+            glDisable(GL_TEXTURE_2D);
+            gluSphere(quad, m == 0 ? 0.10f : 0.07f, 10, 10);
+            glPopMatrix();
+        }
+    }
 
     // Jupiter's moons (index 4)
     if (idx == 4) {
@@ -404,7 +517,7 @@ void renderScene() {
 
     if (showOrbits) {
         for (int i = 0; i < planetCount; i++)
-            drawOrbit(planets[i].orbitRadius);
+            drawOrbit(planets[i].orbitRadius, planets[i].orbitInclination);
         // asteroid belt orbit hint
         glDisable(GL_LIGHTING);
         glColor4f(0.4f, 0.35f, 0.3f, 0.3f);
@@ -416,16 +529,35 @@ void renderScene() {
     for (int i = 0; i < planetCount; i++)
         drawPlanet(i);
 
+    // Halley's Comet
+    drawComet();
+
+    // comet orbit path
+    if (showOrbits) {
+        glDisable(GL_LIGHTING);
+        glColor4f(0.4f, 0.6f, 0.8f, 0.25f);
+        glBegin(GL_LINE_LOOP);
+        for (int i = 0; i < 360; i++) {
+            float r = i * 3.14159f / 180.0f;
+            float ex = halley.a * cos(r) - (halley.a - halley.b);
+            float ez = halley.b * sin(r);
+            glVertex3f(ex, 0.0f, ez);
+        }
+        glEnd();
+        glEnable(GL_LIGHTING);
+    }
+
     // atmosphere glow — Earth (blue), Venus (yellow-white), Mars (red-orange)
-    float earthX = planets[2].orbitRadius * cos(planets[2].orbitAngle * 3.14159f / 180.0f);
-    float earthZ = planets[2].orbitRadius * sin(planets[2].orbitAngle * 3.14159f / 180.0f);
-    drawAtmosphere(earthX, earthZ, planets[2].radius, 0.3f, 0.6f, 1.0f);
+    auto getPlanetPos = [](int i, float& px, float& py, float& pz) {
+        float rad  = planets[i].orbitAngle * 3.14159f / 180.0f;
+        float incl = planets[i].orbitInclination * 3.14159f / 180.0f;
+        px = planets[i].orbitRadius * cos(rad);
+        py = planets[i].orbitRadius * sin(rad) * sin(incl);
+        pz = planets[i].orbitRadius * sin(rad) * cos(incl);
+    };
 
-    float venusX = planets[1].orbitRadius * cos(planets[1].orbitAngle * 3.14159f / 180.0f);
-    float venusZ = planets[1].orbitRadius * sin(planets[1].orbitAngle * 3.14159f / 180.0f);
-    drawAtmosphere(venusX, venusZ, planets[1].radius, 0.9f, 0.8f, 0.5f);
-
-    float marsX = planets[3].orbitRadius * cos(planets[3].orbitAngle * 3.14159f / 180.0f);
-    float marsZ = planets[3].orbitRadius * sin(planets[3].orbitAngle * 3.14159f / 180.0f);
-    drawAtmosphere(marsX, marsZ, planets[3].radius, 0.9f, 0.4f, 0.2f);
+    float ex, ey, ez, vx, vy, vz, mx, my, mz;
+    getPlanetPos(2, ex, ey, ez); drawAtmosphere(ex, ey, ez, planets[2].radius, 0.3f, 0.6f, 1.0f);
+    getPlanetPos(1, vx, vy, vz); drawAtmosphere(vx, vy, vz, planets[1].radius, 0.9f, 0.8f, 0.5f);
+    getPlanetPos(3, mx, my, mz); drawAtmosphere(mx, my, mz, planets[3].radius, 0.9f, 0.4f, 0.2f);
 }

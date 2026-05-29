@@ -17,7 +17,8 @@ struct Planet {
     float moonAngle;
     float moonOrbitRadius;
     float moonOrbitSpeed;
-    float axialTilt;  // degrees
+    float axialTilt;       // degrees
+    float orbitInclination; // degrees — tilt of orbit plane
 };
 
 extern Planet planets[9];

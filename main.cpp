@@ -3,6 +3,9 @@
 #include <GL/glut.h>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
+#include <fstream>
+#include <vector>
 
 #include "src/planet.h"
 #include "src/renderer.h"
@@ -12,10 +15,12 @@
 #include "src/ui.h"
 #include "src/audio.h"
 
-static bool  paused     = false;
-static float speedMult  = 1.0f;
-static int   winW       = 1200;
-static int   winH       = 700;
+static bool  paused      = false;
+static float speedMult   = 1.0f;
+static int   winW        = 1200;
+static int   winH        = 700;
+static float fov         = 45.0f;
+static float targetFov   = 45.0f;
 
 // ── physics update ──────────────────────────────────────────────────────────
 void update(int) {
@@ -30,6 +35,12 @@ void update(int) {
         }
     }
     smoothUpdateCamera();
+    // smooth FOV transition
+    fov += (targetFov - fov) * 0.08f;
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(fov, (double)winW / winH, 0.1, 500.0);
+    glMatrixMode(GL_MODELVIEW);
     glutPostRedisplay();
     glutTimerFunc(16, update, 0);   // ~60 FPS
 }
@@ -86,7 +97,7 @@ void reshape(int w, int h) {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45.0, (double)w / h, 0.1, 500.0);
+    gluPerspective(fov, (double)w / h, 0.1, 500.0);
     glMatrixMode(GL_MODELVIEW);
 }
 
@@ -101,7 +112,11 @@ void keyboard(unsigned char key, int, int) {
         case 'r': case 'R': resetCamera(); break;
         case 'w': case 'W': camera.targetDistance = (camera.targetDistance > 10.0f)   ? camera.targetDistance - 1.5f : camera.targetDistance; break;
         case 's': case 'S': camera.targetDistance = (camera.targetDistance < 180.0f)  ? camera.targetDistance + 1.5f : camera.targetDistance; break;
-        case 27:   exit(0);                                             break;
+        case 't': case 'T':
+            telescopeMode = !telescopeMode;
+            targetFov = telescopeMode ? 10.0f : 45.0f;
+            break;
+        case 27:   exit(0); break;
     }
     glutPostRedisplay();
 }
@@ -145,14 +160,36 @@ void mouseClick(int button, int state, int x, int y) {
     }
 }
 
+// ── screenshot ─────────────────────────────────────────────────────────────────────
+void saveScreenshot() {
+    static int count = 1;
+    char filename[64];
+    snprintf(filename, sizeof(filename), "screenshot_%02d.ppm", count++);
+
+    int w = winW, h = winH;
+    std::vector<unsigned char> pixels(w * h * 3);
+    glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
+
+    std::ofstream f(filename, std::ios::binary);
+    f << "P6\n" << w << " " << h << "\n255\n";
+    // flip vertically
+    for (int row = h - 1; row >= 0; row--)
+        f.write((char*)&pixels[row * w * 3], w * 3);
+    f.close();
+
+    printf("Screenshot saved: %s\n", filename);
+}
+
 // ── arrow keys (navigate between planets) ───────────────────────────────────
 void specialKeys(int key, int, int) {
     if (key == GLUT_KEY_RIGHT)
         selectedPlanet = (selectedPlanet + 1 + planetCount) % planetCount;
     else if (key == GLUT_KEY_LEFT)
         selectedPlanet = (selectedPlanet - 1 + planetCount) % planetCount;
+    else if (key == GLUT_KEY_F1)
+        saveScreenshot();
 
-    if (selectedPlanet >= 0) {
+    if (selectedPlanet >= 0 && (key == GLUT_KEY_RIGHT || key == GLUT_KEY_LEFT)) {
         float px = planets[selectedPlanet].orbitRadius * cos(planets[selectedPlanet].orbitAngle * 3.14159f / 180.0f);
         float pz = planets[selectedPlanet].orbitRadius * sin(planets[selectedPlanet].orbitAngle * 3.14159f / 180.0f);
         focusPlanet(px, pz, planets[selectedPlanet].radius);

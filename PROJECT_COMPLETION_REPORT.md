@@ -1,26 +1,26 @@
 # 3D Solar System Simulation
-## Project Completion Report
+## Project Completion Report (Final)
 
 **Course:** Computer Graphics and Image Processing
 **Department:** Computer Science and Engineering (CSE)
 **University:** USTC
 **Semester:** 7th Semester
 **Team Size:** 2 Members
-**Technology:** C++ | OpenGL | GLUT
-**Status:** ✅ COMPLETED
+**Technology:** C++ | OpenGL (Fixed Pipeline) | GLUT | OpenAL
+**Status:** ✅ FULLY COMPLETED
 
 ---
 
 ## Table of Contents
 
 1. [Project Summary](#1-project-summary)
-2. [What Was Planned vs What Was Built](#2-what-was-planned-vs-what-was-built)
-3. [Final Folder Structure](#3-final-folder-structure)
-4. [Module Implementation Details](#4-module-implementation-details)
-5. [CG Topics Implemented](#5-cg-topics-implemented)
-6. [Controls Reference](#6-controls-reference)
-7. [How to Build & Run](#7-how-to-build--run)
-8. [Planet Data Reference](#8-planet-data-reference)
+2. [Complete Features List](#2-complete-features-list)
+3. [CG Topics Covered](#3-cg-topics-covered)
+4. [Final Folder Structure](#4-final-folder-structure)
+5. [Module Implementation Details](#5-module-implementation-details)
+6. [Planet Data Reference](#6-planet-data-reference)
+7. [Controls Reference](#7-controls-reference)
+8. [How to Build & Run](#8-how-to-build--run)
 9. [Known Limitations](#9-known-limitations)
 10. [References](#10-references)
 
@@ -28,99 +28,138 @@
 
 ## 1. Project Summary
 
-**Project Title:** 3D Interactive Solar System Simulation
+A real-time 3D interactive Solar System simulation built from scratch using C++ and OpenGL. The simulation renders the Sun, all 9 planets (including Pluto), multiple moons, Saturn's ring, Uranus's ring, asteroid belt, Halley's Comet, and a Milky Way background — all with real textures, Phong lighting, orbital mechanics, and full user interaction.
 
-A real-time 3D simulation of the Solar System built using C++ and OpenGL (Legacy/Fixed-Function Pipeline). The simulation renders the Sun, all 8 planets with real surface textures, Earth's Moon, Saturn's ring, an asteroid belt, and a star-filled background — all with proper lighting, Phong shading, orbital mechanics, and interactive camera controls.
-
-The project was built from scratch using only:
-- OpenGL (GL/GLU/GLUT) for rendering
-- stb_image.h (header-only) for texture loading
-- Standard C++17
-
-No game engine, no external framework.
+**No game engine. No external framework. Pure OpenGL + C++.**
 
 ---
 
-## 2. What Was Planned vs What Was Built
+## 2. Complete Features List
 
-| Feature | Planned | Built | Status |
-|---------|---------|-------|--------|
-| Sun at center with glow effect | ✅ | ✅ | Done |
-| All 8 planets with unique sizes | ✅ | ✅ | Done |
-| Real surface textures on planets | ✅ | ✅ | Done |
-| Unique orbital speed per planet | ✅ | ✅ | Done |
-| Unique self-rotation per planet | ✅ | ✅ | Done |
-| Earth's Moon orbiting Earth | ✅ | ✅ | Done |
-| Saturn's ring | ✅ | ✅ | Done |
-| Asteroid belt (Mars–Jupiter) | ✅ | ✅ | Done |
-| Star background | ✅ | ✅ | Done |
-| Visible orbit paths | ✅ | ✅ | Done |
-| Mouse drag camera rotation | ✅ | ✅ | Done |
-| Scroll wheel zoom | ✅ | ✅ | Done |
-| Pause / Resume (SPACE) | ✅ | ✅ | Done |
-| Speed control (+/-) | ✅ | ✅ | Done |
-| Click planet → info panel | ✅ | ✅ | Done |
-| Toggle orbit lines (O) | ✅ | ✅ | Done |
-| Toggle planet labels (L) | ✅ | ✅ | Done |
-| Reset camera (R) | ✅ | ✅ | Done |
-| Phong shading (ambient+diffuse+specular) | ✅ | ✅ | Done |
-| Sun as point light source (GL_LIGHT0) | ✅ | ✅ | Done |
-| Z-buffering / depth test | ✅ | ✅ | Done |
-| On-screen HUD (controls help) | ✅ | ✅ | Done |
-| FPS target ~60 | ✅ | ✅ | Done (16ms timer) |
+### Celestial Bodies
+| Object | Details |
+|--------|---------|
+| ☀️ Sun | Procedural fiery glow, animated surface layers, additive bloom |
+| 🪐 Mercury | Real texture, axial tilt 0.03°, orbital inclination 7.0° |
+| 🪐 Venus | Real texture, retrograde rotation (177.4°), inclination 3.4° |
+| 🌍 Earth | Real texture, cloud layer, night city lights, axial tilt 23.5° |
+| 🔴 Mars | Real texture, axial tilt 25.2°, inclination 1.9° |
+| 🟠 Jupiter | Real texture, largest planet, 3 moons (Io, Europa, Ganymede) |
+| 🪐 Saturn | Real texture, wide ring with alpha blending |
+| 🔵 Uranus | Real texture, extreme tilt 97.8°, thin bluish ring |
+| 🔵 Neptune | Real texture, axial tilt 28.3° |
+| ⚪ Pluto | Dwarf planet, extreme inclination 17.1° |
+| 🌙 Earth's Moon | Real texture, orbits Earth |
+| 🔴 Mars Moons | Phobos & Deimos orbiting Mars |
+| ☄️ Halley's Comet | Elliptical orbit, Kepler speed, animated tail |
+| ☄️ Asteroid Belt | 300 random asteroids between Mars & Jupiter |
 
-**Result: Every planned feature was successfully implemented.**
+### Visual Effects
+| Effect | Implementation |
+|--------|---------------|
+| Sun Glow | Multi-layer additive blend spheres |
+| Atmosphere Halo | Earth (blue), Venus (yellow), Mars (red) |
+| Earth Clouds | Semi-transparent rotating cloud layer |
+| Earth Night Lights | City lights on dark side (additive blend) |
+| Saturn Ring | Triangle strip with alpha gradient |
+| Uranus Ring | Thin bluish ring matching axial tilt |
+| Shooting Stars | Random spawning with fading tail |
+| Milky Way Background | Real texture on inverted sphere |
+| Star Field | 1500 randomly placed point stars |
+
+### Interaction & Controls
+| Feature | Implementation |
+|---------|---------------|
+| Camera Rotation | Mouse drag (spherical coordinates) |
+| Zoom | Scroll wheel + W/S keys (smooth lerp) |
+| Planet Focus | Double-click → smooth camera transition |
+| Arrow Navigation | ← → keys cycle through planets |
+| Telescope Mode | T key → FOV 45° → 10° smooth transition |
+| Pause/Resume | SPACE key |
+| Speed Control | = / - keys (0.1x to 20x) |
+| Orbit Toggle | O key |
+| Label Toggle | L key |
+| Camera Reset | R key |
+| Screenshot | F1 key → saves .ppm file |
+
+### Audio
+| Feature | Implementation |
+|---------|---------------|
+| Space Ambient | Procedurally generated using OpenAL |
+| Sound Design | Layered sine waves (55Hz base + harmonics) |
+| LFO Modulation | Slow breathing/pulsing effect |
+| Loop | 60-second seamless loop |
 
 ---
 
-## 3. Final Folder Structure
+## 3. CG Topics Covered
+
+| CG Topic | Implementation |
+|----------|---------------|
+| 3D Transformations | Planet orbit, self-rotation, axial tilt, orbital inclination |
+| Perspective Projection | `gluPerspective` with dynamic FOV (telescope mode) |
+| Orthographic Projection | 2D HUD overlay using `gluOrtho2D` |
+| Viewing / Camera | `gluLookAt` with spherical coordinates + smooth lerp |
+| Lighting Model | Sun as `GL_LIGHT0` point light source |
+| Phong Shading | Ambient + Diffuse + Specular + Shininess per planet |
+| Texture Mapping | Real planet textures via `stb_image.h` |
+| Alpha Blending | Rings, atmosphere, glow, clouds, night lights |
+| Animation | Timer-based 60 FPS loop with physics update |
+| Z-Buffering | `GL_DEPTH_TEST` + `glDepthMask` for glow layers |
+| Geometric Primitives | Sphere, Line Loop, Triangle Strip, Points, Lines |
+| Coordinate Systems | World → Object → Camera space pipeline |
+| Kepler's Law | Comet speed varies with distance from Sun |
+| Particle System | Asteroid belt, shooting stars |
+
+---
+
+## 4. Final Folder Structure
 
 ```
 Graphics_Project/
 │
-├── main.cpp                  # Entry point, GLUT setup, game loop, input
+├── main.cpp                  # Entry point, game loop, all input handling
 │
 ├── src/
-│   ├── planet.cpp / .h       # Planet struct & data for all 8 planets
-│   ├── renderer.cpp / .h     # All drawing functions (sun, planets, stars, etc.)
-│   ├── camera.cpp / .h       # Camera rotation, zoom, reset
-│   ├── lighting.cpp / .h     # OpenGL lighting setup (Sun as GL_LIGHT0)
+│   ├── planet.cpp / .h       # Planet struct with 18 properties each
+│   ├── renderer.cpp / .h     # All rendering (sun, planets, comet, etc.)
+│   ├── camera.cpp / .h       # Smooth camera with focus & lerp
+│   ├── lighting.cpp / .h     # OpenGL lighting setup
 │   ├── texture.cpp / .h      # stb_image texture loader
-│   └── ui.cpp / .h           # HUD, planet labels, info panel
+│   ├── ui.cpp / .h           # HUD, labels, info panel, speed indicator
+│   └── audio.cpp / .h        # Procedural space ambient (OpenAL)
 │
 ├── include/
-│   └── stb_image.h           # Header-only image loading library
+│   └── stb_image.h           # Header-only image loader
 │
 ├── textures/
-│   ├── sun.jpg
-│   ├── mercury.jpg
-│   ├── venus.jpg
-│   ├── earth.jpg
-│   ├── mars.jpg
-│   ├── jupiter.jpg
-│   ├── saturn.jpg
-│   ├── uranus.jpg
-│   ├── neptune.jpg
-│   └── moon.jpg
+│   ├── sun.jpg               # Sun surface
+│   ├── mercury.jpg           # Mercury surface
+│   ├── venus.jpg             # Venus surface
+│   ├── earth.jpg             # Earth day map
+│   ├── earth_clouds.jpg      # Earth cloud layer
+│   ├── earth_night.jpg       # Earth night city lights
+│   ├── mars.jpg              # Mars surface
+│   ├── jupiter.jpg           # Jupiter surface
+│   ├── saturn.jpg            # Saturn surface
+│   ├── uranus.jpg            # Uranus surface
+│   ├── neptune.jpg           # Neptune surface
+│   ├── moon.jpg              # Earth's Moon
+│   └── milkyway.jpg          # Background star field
 │
-├── Makefile                  # Build configuration
+├── Makefile
 ├── solar_system              # Compiled executable
-└── PROJECT_DOCUMENTATION.md # This file
+├── README.md
+├── PROJECT_DOCUMENTATION.md  # Initial planning document
+└── PROJECT_COMPLETION_REPORT.md  # This file
 ```
 
 ---
 
-## 4. Module Implementation Details
-
-### main.cpp
-- Initializes GLUT window (1200×700, double buffered, depth enabled)
-- Registers all callbacks: display, reshape, keyboard, mouse, motion, timer
-- Timer fires every 16ms (~60 FPS) to update planet positions
-- Handles keyboard input: SPACE, +/-, O, L, R, W, S, ESC
-- Handles mouse click for planet selection (screen-space distance picking)
+## 5. Module Implementation Details
 
 ### planet.cpp / planet.h
-Defines the `Planet` struct:
+Each planet stores 18 properties:
 ```cpp
 struct Planet {
     string name;
@@ -131,90 +170,87 @@ struct Planet {
     float r, g, b;
     bool hasMoon, hasRing;
     float moonAngle, moonOrbitRadius, moonOrbitSpeed;
+    float axialTilt;
+    float orbitInclination;
 };
 ```
-All 8 planets initialized with scientifically inspired relative values.
 
-### renderer.cpp / renderer.h
-- `drawStars()` — 1500 randomly pre-generated point stars on a sphere of radius ~90
-- `drawSun()` — 3 layered blended glow spheres + solid yellow-white core
-- `drawOrbit(radius)` — GL_LINE_LOOP circle on XZ plane
-- `drawSaturnRing(inner, outer)` — GL_TRIANGLE_STRIP with alpha blending
-- `drawAsteroidBelt()` — 300 small random spheres between radius 16.5–18.3
-- `drawMoon(idx)` — grey sphere orbiting Earth
-- `drawPlanet(idx)` — textured sphere with Phong material, calls ring/moon if needed
-- `renderScene()` — calls all of the above in correct order
+### renderer.cpp
+- `drawSun()` — solid core + 3 animated fiery layers + 4 glow spheres (additive blend)
+- `drawPlanet(idx)` — textured sphere + axial tilt + inclination + night lights + clouds
+- `drawAtmosphere(x,y,z,r,g,b)` — 3-layer halo for Earth, Venus, Mars
+- `drawMoon(idx)` — textured moon orbiting Earth
+- `drawComet()` — elliptical orbit with Kepler speed + animated tail
+- `drawSaturnRing()` — triangle strip with alpha gradient
+- `drawAsteroidBelt()` — 300 random small spheres
+- `drawShootingStars()` — 5 concurrent shooters with fading tails
+- `drawStars()` — milky way texture sphere + 1500 point stars
 
-### camera.cpp / camera.h
-- Stores `angleX`, `angleY`, `distance`
-- Mouse left-drag → updates angles
-- Scroll (button 3/4) → adjusts distance
-- `applyCamera()` → converts spherical coords to `gluLookAt()` call
-- `resetCamera()` → restores default view (angleX=30, distance=55)
+### camera.cpp
+- Spherical coordinate system (angleX, angleY, distance)
+- Smooth lerp for all transitions (zoom, focus, angle)
+- `focusPlanet(px, py, pz, radius)` — smooth camera move to planet
+- Mouse drag instantly updates angles (no lag)
+- Scroll + W/S for zoom with target lerp
 
-### lighting.cpp / lighting.h
-- `GL_LIGHT0` placed at origin (Sun's position)
-- Ambient: very low (0.08) — space is dark
-- Diffuse: high (1.0) — Sun is bright
-- Specular: medium (1.0) — shiny planet surfaces
-- `glEnable(GL_LIGHTING)`, `glEnable(GL_DEPTH_TEST)`, `glEnable(GL_NORMALIZE)`
+### audio.cpp
+- OpenAL device + context initialization
+- Procedural 60-second PCM buffer generation
+- Layered sine waves: 55Hz, 82.5Hz, 110Hz, 165Hz, 220Hz
+- Two LFO modulators (0.05Hz, 0.03Hz) for breathing effect
+- Seamless loop with fade in/out at endpoints
 
-### texture.cpp / texture.h
-- Uses `stb_image.h` to load JPG files
-- Supports both RGB and RGBA formats
-- `GL_LINEAR` filtering for smooth texture display
-- Falls back gracefully (solid color) if texture file not found
-
-### ui.cpp / ui.h
-- `drawHUD()` — top-left controls help text in 2D orthographic overlay
-- `drawText()` — renders string using `glutBitmapCharacter`
-- `drawInfoPanel(idx)` — semi-transparent blue panel (bottom-right) showing planet name, distance in AU, orbital period
-- Planet labels projected from 3D world space to 2D screen using `gluProject()`
+### ui.cpp
+- Speed indicator (green/orange/red based on speed)
+- Pause indicator (red `[ PAUSED ]`)
+- Telescope mode indicator (cyan `[ TELESCOPE MODE ]`)
+- Planet info panel (name, type, distance AU, orbital period)
+- Planet labels projected from 3D to 2D using `gluProject`
 
 ---
 
-## 5. CG Topics Implemented
+## 6. Planet Data Reference
 
-| CG Topic | Implementation |
-|----------|---------------|
-| 3D Transformations | `glTranslatef`, `glRotatef` for orbit + self-rotation |
-| Perspective Projection | `gluPerspective(45°)` in reshape callback |
-| Viewing / Camera | `gluLookAt()` with spherical coordinate camera |
-| Lighting Model | `GL_LIGHT0` at Sun origin — point light source |
-| Phong Shading | `GL_AMBIENT` + `GL_DIFFUSE` + `GL_SPECULAR` + `GL_SHININESS` per planet |
-| Texture Mapping | `glTexImage2D` + `gluQuadricTexture` on all planets |
-| Animation | Timer-based frame loop, angle incremented per frame |
-| Z-Buffering | `GL_DEPTH_TEST` enabled, cleared each frame |
-| Alpha Blending | Saturn ring + Sun glow using `GL_BLEND` |
-| Geometric Primitives | `gluSphere`, `GL_LINE_LOOP`, `GL_TRIANGLE_STRIP`, `GL_POINTS` |
-| Coordinate Systems | World space → object space → camera space pipeline |
-| Orthographic Projection | 2D HUD overlay using `gluOrtho2D` |
+| Planet | Radius | Orbit | Incl. | Tilt | Moons | Ring |
+|--------|--------|-------|-------|------|-------|------|
+| Mercury | 0.35 | 5.0 | 7.0° | 0.03° | — | — |
+| Venus | 0.87 | 7.0 | 3.4° | 177.4° | — | — |
+| Earth | 0.92 | 10.0 | 0.0° | 23.5° | Moon | — |
+| Mars | 0.50 | 14.0 | 1.9° | 25.2° | Phobos, Deimos | — |
+| Jupiter | 2.80 | 21.0 | 1.3° | 3.1° | Io, Europa, Ganymede | — |
+| Saturn | 2.30 | 28.5 | 2.5° | 26.7° | — | Wide |
+| Uranus | 1.40 | 35.0 | 0.8° | 97.8° | — | Thin |
+| Neptune | 1.35 | 40.0 | 1.8° | 28.3° | — | — |
+| Pluto | 0.18 | 46.0 | 17.1° | 122.5° | — | — |
 
 ---
 
-## 6. Controls Reference
+## 7. Controls Reference
 
 | Key / Action | Function |
 |-------------|---------|
-| Mouse Left Drag | Rotate camera around solar system |
+| Mouse Left Drag | Rotate camera |
 | Scroll Up / W | Zoom In |
 | Scroll Down / S | Zoom Out |
-| SPACE | Pause / Resume animation |
-| + | Increase simulation speed |
-| - | Decrease simulation speed |
-| O | Toggle orbit lines ON/OFF |
-| L | Toggle planet labels ON/OFF |
-| R | Reset camera to default view |
-| Left Click on Planet | Show planet info panel |
-| ESC | Exit application |
+| SPACE | Pause / Resume |
+| = | Speed Up |
+| - | Speed Down |
+| T | Toggle Telescope Mode |
+| O | Toggle Orbit Lines |
+| L | Toggle Planet Labels |
+| R | Reset Camera |
+| ← → Arrow Keys | Navigate between planets |
+| Double-Click Planet | Focus camera on planet |
+| F1 | Save Screenshot (.ppm) |
+| ESC | Exit |
 
 ---
 
-## 7. How to Build & Run
+## 8. How to Build & Run
 
-### Dependencies (already installed on this system)
+### Dependencies
 ```bash
-sudo apt-get install freeglut3-dev libgl1-mesa-dev libglu1-mesa-dev
+sudo apt-get install freeglut3-dev libgl1-mesa-dev libglu1-mesa-dev libopenal-dev
 ```
 
 ### Build
@@ -233,37 +269,15 @@ make
 make clean
 ```
 
-### Manual compile (without Makefile)
-```bash
-g++ main.cpp src/*.cpp -o solar_system -lGL -lGLU -lglut -std=c++17 -I.
-```
-
----
-
-## 8. Planet Data Reference
-
-| Planet | Radius | Orbit Radius | Orbit Speed | Has Moon | Has Ring |
-|--------|--------|-------------|-------------|----------|----------|
-| Mercury | 0.4 | 4.0 | 4.74 | No | No |
-| Venus | 0.9 | 7.0 | 1.86 | No | No |
-| Earth | 1.0 | 10.0 | 1.00 | Yes | No |
-| Mars | 0.5 | 14.0 | 0.53 | No | No |
-| Jupiter | 2.5 | 20.0 | 0.08 | No | No |
-| Saturn | 2.0 | 27.0 | 0.03 | No | Yes |
-| Uranus | 1.5 | 33.0 | 0.01 | No | No |
-| Neptune | 1.4 | 38.0 | 0.006 | No | No |
-
-Speeds are relative — Mercury is fastest (closest to Sun), Neptune is slowest (farthest).
-
 ---
 
 ## 9. Known Limitations
 
-- Uses OpenGL Legacy (Fixed-Function Pipeline) — not modern OpenGL 3.3+ with shaders. This was intentional as the course covers classic CG concepts.
-- Planet sizes and distances are not to true astronomical scale — they are adjusted for visual clarity.
-- Moon texture not applied (grey color used) — moon.jpg is downloaded but not yet mapped.
-- No shadow casting between planets (OpenGL fixed pipeline limitation).
-- Star brightness flickers slightly due to per-frame random color — cosmetic only.
+- Uses OpenGL Legacy (Fixed-Function Pipeline) — intentional for course compatibility
+- Planet sizes not to true astronomical scale — adjusted for visual clarity
+- No real shadow casting between planets
+- Halley's Comet orbit is simplified (not true 75-year period)
+- Screenshot saves as .ppm format (open with GIMP or convert with ImageMagick)
 
 ---
 
@@ -275,15 +289,15 @@ Speeds are relative — Mercury is fastest (closest to Sun), Neptune is slowest 
 4. NASA Solar System Exploration — https://solarsystem.nasa.gov
 5. Planet Textures — https://www.solarsystemscope.com/textures/
 6. stb_image.h — https://github.com/nothings/stb
-7. OpenGL GLU Reference — https://www.opengl.org/resources/libraries/glut/
+7. OpenAL Programmer's Guide — https://openal.org/documentation/
 
 ---
 
-## Final Note
+## Final Summary
 
-> This project successfully implements a complete, real-time 3D Solar System simulation covering all major Computer Graphics course topics in a single application. Every feature listed in the initial project plan was implemented and tested. The simulation runs at ~60 FPS with textures, lighting, shading, animation, and full user interaction.
+> This project implements a **complete, scientifically inspired, visually rich 3D Solar System simulation** covering every major topic of the Computer Graphics course. It features 9 planets with real textures, multiple moons, rings, a procedurally generated space ambient soundtrack, Halley's Comet with Kepler's law, Earth's night city lights, atmosphere glow effects, telescope mode, screenshot capability, and full interactive camera control — all built from scratch using C++ and OpenGL without any game engine or external framework.
 
 ---
 
-*Completion Report — CSE Department, 7th Semester, USTC*
+*Final Completion Report — CSE Department, 7th Semester, USTC*
 *Course: Computer Graphics and Image Processing*
